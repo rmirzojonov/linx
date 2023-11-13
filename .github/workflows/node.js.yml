@@ -25,6 +25,11 @@ jobs:
         node-version: '18.x'
         cache: 'npm'
         cache-dependency-path: './server/package-lock.json'
-    - run: npm install
-    - run: npm run build --if-present
-    - run: npm test
+    - name: Install dependencies
+      run: npm ci
+    - name: Build (if present)
+      run: npm run build --if-present
+    - name: Run Tests
+      run: npm test 
+      env:
+            CI: true
