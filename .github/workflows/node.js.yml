@@ -15,10 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./server/
-    strategy:
-      matrix:
-        node-version: [18.x]
+        working-directory: ./server
 
     steps:
     - uses: actions/checkout@v3
