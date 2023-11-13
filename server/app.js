@@ -13,10 +13,24 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
+const isValidUrl = (url) => {
+  const pattern = new RegExp(
+    '^(https?:\\/\\/)?' + // protocol
+      '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+      '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+      '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+      '(\\#[-a-z\\d_]*)?$', // fragment locator
+    'i'
+  );
+
+  return pattern.test(url);
+}
+
 app.post('/shorten', (req, res) => {
   let originalUrl = req.body.longUrl;
-  if (!originalUrl.startsWith('http://') && !originalUrl.startsWith('https://')) {
-    res.status(400).send('Invalid url');
+  if (!isValidUrl(originalUrl)) {
+    res.status(400).send({ error: { message: 'Invalid url' }});
     return;
   }
 
@@ -46,7 +60,7 @@ app.get('/:shortUrl', (req, res) => {
   if (urlEntry && urlEntry.expirationTime > Date.now()) {
     res.redirect(urlEntry.originalUrl);
   } else {
-    res.status(404).send('Not Found');
+    res.status(404).send({ error: { message: 'Not Found' }});
   }
 });
 
@@ -60,7 +74,6 @@ setInterval(() => {
   }
 }, 3600000); // Run every hour (3600000 milliseconds)
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
