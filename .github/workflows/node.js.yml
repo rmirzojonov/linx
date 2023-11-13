@@ -13,11 +13,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: ./server/
     strategy:
       matrix:
         node-version: [18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v3
@@ -26,6 +27,7 @@ jobs:
       with:
         node-version: '18.x'
         cache: 'npm'
-    - run: cd server && npm install
-    - run: cd server && npm run build --if-present
-    - run: cd server && npm test
+        cache-dependency-path: './server/package-lock.json'
+    - run: npm install
+    - run: npm run build --if-present
+    - run: npm test
