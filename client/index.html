@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="Linx - Url Shortener" />
+    <link rel="apple-touch-icon" href="logo192.png" />
+    <link rel="manifest" href="manifest.json" />
+    <title>Linx - Url Shortener</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #shorten-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        #navigation {
+            padding: 10px;
+            background-color: #d7f0d7; /* Light green, less eye-catching */
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        #navigation a {
+            color: #333; /* Dark gray for text */
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        #about-page,
+        #contact-page {
+            display: none;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        #shorten-form {
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        #shorten-input {
+            flex: 1;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #shorten-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #shorten-btn:hover {
+            background-color: #45a049;
+        }
+
+        #shortened-url {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            padding-bottom: 10px;
+            box-sizing: border-box;
+            word-wrap: break-word;
+        }
+
+        .error-popup {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #f8d7da; /* Slightly less eye-catching color */
+            color: #721c24; /* Dark red text color */
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-popup button {
+            background: none;
+            border: none;
+            color: #721c24; /* Dark red color */
+            cursor: pointer;
+            font-size: 24px; /* Larger font size for the X */
+        }
+
+        #copy-btn {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #copy-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script>
+        const apiUrl = "http://localhost:3000";
+
+        function showErrorPopup(message) {
+            var errorPopup = document.createElement('div');
+            errorPopup.className = 'error-popup';
+            errorPopup.innerHTML = '<span>' + message + '</span><button onclick="closeErrorPopup()">×</button>';
+
+            document.body.appendChild(errorPopup);
+
+            setTimeout(function () {
+                closeErrorPopup();
+            }, 5000);
+        }
+
+        function closeErrorPopup() {
+            var errorPopup = document.querySelector('.error-popup');
+            if (errorPopup) {
+                errorPopup.remove();
+            }
+        }
+
+        function isValidURL(input) {
+            let url;
+  
+            try {
+                url = new URL(input);
+            } catch (_) {
+                return false;  
+            }
+
+            return url.protocol === "http:" || url.protocol === "https:";
+        }
+
+        function shortenUrl() {
+            var longUrlInput = document.getElementById('shorten-input');
+            var longUrl = longUrlInput.value.trim();
+
+            if (!longUrl.startsWith('http://') && !longUrl.startsWith('https://')) {
+                longUrl = 'http://' + longUrl;
+            }
+
+            if(!isValidURL(longUrl)) {
+                showErrorPopup("Invalid url");
+                return;
+            }
+            
+            var endpoint = "/shorten";
+            var shortenedUrlDiv = document.getElementById('shortened-url');
+
+            shortenedUrlDiv.innerHTML = '';
+
+            fetch(apiUrl + endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    longUrl: longUrl,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.error) {
+                    showErrorPopup(data.error.message);
+                    return;
+                }
+
+                var shortenedUrl = data.shortUrl;
+                shortenedUrlDiv.innerHTML = '<strong>Shortened URL:</strong> <a id="shortened-link" href="' + shortenedUrl + '" target="_blank">' + shortenedUrl + '</a> <button id="copy-btn" onclick="copyToClipboard()">Copy</button>';
+                shortenedUrlDiv.style.opacity = 1;
+                longUrlInput.value = longUrl;
+            })
+            .catch(error => {
+                showErrorPopup(error.message);
+            });
+        }
+
+        function copyToClipboard() {
+            var shortenedLink = document.getElementById('shortened-link');
+            var tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = shortenedLink.textContent;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            alert('Link copied to clipboard!');
+        }
+
+        function showPage(pageId) {
+            var pages = ['about-page', 'contact-page'];
+
+            pages.forEach(function (page) {
+                document.getElementById(page).style.display = 'none';
+            });
+
+            document.getElementById(pageId).style.display = 'block';
+        }
+    </script>
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="shorten-container">
+        <h1>Linx - URL Shortener</h1>
+
+        <form id="shorten-form">
+            <input type="url" id="shorten-input" placeholder="Enter URL to shorten" required>
+            <button type="button" id="shorten-btn" onclick="shortenUrl()">Shorten</button>
+        </form>
+
+        <div id="shortened-url"></div>
+
+        <div id="navigation">
+            <a href="#" onclick="showPage('about-page')">About</a>
+            <a href="#" onclick="showPage('contact-page')">Contact</a>
+        </div>
+
+        <div id="about-page">
+            <span>This website was created Ravshanjon Mirzojonov.</span>
+        </div>
+        <div id="contact-page">
+            <span>You can contact me by <a href="mailto:ravshanjonmir@gmail.com">email</a>.</span>
+        </div>
+    </div>
+  </body>
+</html>
