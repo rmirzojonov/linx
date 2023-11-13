@@ -26,7 +26,6 @@ jobs:
       with:
         node-version: '18.x'
         cache: 'npm'
-    - name: Install dependencies
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+    - run: cd server && npm ci
+    - run: cd server && npm run build --if-present
+    - run: cd server && npm test
